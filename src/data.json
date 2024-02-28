@@ -1,0 +1,32 @@
+[
+    {
+      "id": 1,
+      "product": "Гамбургер",
+      "quantity": 2,
+      "price_per_unit": 50,
+      "total_price": 100,
+      "customer": "Іванов Іван",
+      "address": "вул. Пушкіна, 10",
+      "timestamp": "2024-02-22 10:00:00"
+    },
+    {
+      "id": 2,
+      "product": "Піца",
+      "quantity": 1,
+      "price_per_unit": 120,
+      "total_price": 120,
+      "customer": "Петров Петро",
+      "address": "вул. Лермонтова, 5",
+      "timestamp": "2024-02-22 10:15:00"
+    },
+    {
+      "id": 3,
+      "product": "Кава",
+      "quantity": 3,
+      "price_per_unit": 25,
+      "total_price": 75,
+      "customer": "Сидорова Ольга",
+      "address": "вул. Гоголя, 20",
+      "timestamp": "2024-02-22 10:30:00"
+    }
+  ]

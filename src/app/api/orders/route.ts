@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connect } from '../../../../db';
 import Order from '../../../../models/Order';
-import { IOrder } from '@/interfaces/order/Order';
+import { IOrder } from '@/interfaces/order/IOrder';
 
 export async function GET() {
   try {
@@ -14,21 +14,23 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request ) {
+export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log(body)
+    console.log(body);
     await connect();
     const newOrder = new Order(body);
     await newOrder.save();
     return new NextResponse(
-      JSON.stringify({ message: 'Order is created', order: newOrder }),
+      JSON.stringify({ message: 'Order is created successfully', order: newOrder }),
       { status: 201 }
     );
   } catch (err: any) {
     console.error(err);
     return new NextResponse(
-      JSON.stringify({ message: 'ERROR created order' }),
+      JSON.stringify({
+        message: `Error processing and ordering, please check whether all required fields are filled. Please try again or contact support.`,
+      }),
       { status: 500 }
     );
   }

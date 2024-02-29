@@ -48,7 +48,7 @@ const Modal: FC<ModalProps> = ({
                 {cancelBtnTitle}
               </button>
               <button
-                className="px-4 py-2 text-white bg-green-600 rounded-md hover:border-green-600 hover:text-green-600"
+                className="px-4 py-2 text-white bg-green-600 rounded-md hover:border-green-700 hover:text-purple-600"
                 onClick={onClickSuccess}
               >
                 {successBtnTitle}

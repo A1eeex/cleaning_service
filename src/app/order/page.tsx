@@ -6,11 +6,19 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import InputForm from '@/components/atoms/InputForm';
+import OrderForm from '@/components/molecules/OrderForm';
+import Image from 'next/image';
+
+//icons
+import privateHouseIcon from '@/images/icons/privateHouse_icon.svg';
 
 interface IFormInput {
   street: string;
   houseNumber: string;
-  apartmentNumber: string;
+
+  contactFullname: string;
+  contactPhoneNumber: number;
+  contactMail: string;
 }
 
 const OrderPage = () => {
@@ -23,17 +31,29 @@ const OrderPage = () => {
 
   const [roomsCount, setCountRooms] = useState<number>(1);
   const [bathroomCount, setBathroomCount] = useState<number>(1);
-  const [isPrivateHouse, setIsPrivateHouse] = useState<boolean>(true);
+  const [isPrivateHouse, setIsPrivateHouse] = useState<boolean>(false);
 
   const [totalAmount, setTotalPrice] = useState<number>(100);
 
-  const [street, setStreet] = useState<string>('1');
-  const [houseNumber, setHouseNumber] = useState<string>('2');
-  const [apartmentNumber, setApartmentNumber] = useState<string>('');
+  const [street, setStreet] = useState<string>('12');
+  const [houseNumber, setHouseNumber] = useState<string>('22');
+  const [apartmentNumber, setApartmentNumber] = useState<string | null>(null);
   const [floorNumber, setFloorNumber] = useState<string | null>(null);
   const [intercomCode, setIntercomCode] = useState<number | null>(null);
 
+  const [contactFullname, setContactFullname] = useState<string | null>(null);
+  const [contactPhoneNumber, setContactPhoneNumber] = useState<number | null>(
+    null
+  );
+  const [contactMail, setContactMail] = useState<string | null>(null);
+
   const [isOpenCreateModal, setIsOpenCreateModal] = useState(false);
+  const [isLoadingCreateOrder, setIsLoadingCreateOrder] =
+    useState<boolean>(false);
+
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  //Icons
 
   const decreaseRoomsCount = () => {
     if (roomsCount > 1) {
@@ -60,14 +80,12 @@ const OrderPage = () => {
   const handleCheckedIsPrivateHouse = () => {
     setIsPrivateHouse(!isPrivateHouse);
     calculateTotalPrice();
-    console.log('isPrivateHouse');
-    console.log(isPrivateHouse);
   };
 
   const calculateTotalPrice = () => {
     let price = totalAmount;
 
-    if (!isPrivateHouse) {
+    if (isPrivateHouse) {
       price = totalAmount * 1.2;
     } else {
       price = totalAmount;
@@ -91,17 +109,27 @@ const OrderPage = () => {
         floorNumber,
         intercomCode,
       },
+      contacts: {
+        fullName: contactFullname,
+        phoneNumber: contactPhoneNumber,
+        email: contactMail,
+      },
     };
 
     try {
+      setIsLoadingCreateOrder(true);
       const res = await axios.post(`/api/orders`, createOrder);
-      console.log('Order created successfully:', res.data);
       setCountRooms(1);
       setBathroomCount(1);
       setTotalPrice(100);
       setIsOpenCreateModal(false);
-    } catch (err) {
-      console.log(err);
+      console.log('Order created successfully:', res.data);
+    } catch (err: any) {
+      setErrorMessage(err.response.data.message);
+      // console.log(err ? err.response.data.message : '');
+      setIsOpenCreateModal(false);
+    } finally {
+      setIsLoadingCreateOrder(false);
     }
   };
 
@@ -111,129 +139,204 @@ const OrderPage = () => {
     setIsOpenCreateModal(true);
   };
 
+  // useEffect(() => {
+
+  // }, [isPrivateHouse]);
   return (
     <div>
-      <h1>Клінінг клінінг</h1>
-      <div className='flex align-middle gap-2'>
-        <CountItemButton
-          subtraction={decreaseRoomsCount}
-          addition={incrementRooms}
-          currentCount={roomsCount}
-          titleOfCount='rooms'
-        />
-        <CountItemButton
-          subtraction={decreaseBathroomCount}
-          addition={incrementBathroom}
-          currentCount={bathroomCount}
-          titleOfCount='bathroom'
-        />
-        <div className='flex items-center gap-2'>
-          <h3 className='text-lg font-bold'>Private House total x1.2</h3>
-          <input
-            className='form-checkbox h-5 w-5 text-blue-500'
-            onChange={handleCheckedIsPrivateHouse}
-            type='checkbox'
-            checked={!isPrivateHouse}
-          />
-        </div>
-      </div>
-      <div className='bg-slate-400 p-4 rounded-lg'>
-        <h3 className='text-xl font-semibold mb-2'>ВКАЖІТЬ ВАШУ АДРЕСУ</h3>
-        <form className='flex flex-col gap-3'>
-          <label className='flex flex-col'>
-            <span className='text-sm'>Вулиця*:</span>
-            <p className='error-message '>{errors.street?.message}</p>
-            <input
-              {...register('street', {
+      <div className='container-order-contenr flex w-full gap-4'>
+        <div className='order-contenr-service w-3/5'>
+          <h1>Клінінг клінінг</h1>
+          <div className='flex flex-col gap-2'>
+            <div className='flex gap-3'>
+              <CountItemButton
+                subtraction={decreaseRoomsCount}
+                addition={incrementRooms}
+                currentCount={roomsCount}
+                titleOfCount='rooms'
+              />
+              <CountItemButton
+                subtraction={decreaseBathroomCount}
+                addition={incrementBathroom}
+                currentCount={bathroomCount}
+                titleOfCount='bathroom'
+              />
+            </div>
+
+            <label
+              className={`flex items-center gap-2 w-fit border rounded-md p-2 transition-all duration-300 ${
+                isPrivateHouse && ' bg-event-color border-main-color'
+              }`}
+              htmlFor='privateHouseCheckbox'
+            >
+              <div className='flex items-center text-lg font-bold gap-2'>
+                <Image
+                  priority
+                  className='w-10'
+                  src={privateHouseIcon}
+                  alt='Private House icon'
+                />
+                {'Private House'}
+                <span
+                  className={`p-1 px-2 rounded-md transition-all duration-500
+                    ${isPrivateHouse ? ' bg-event-color-active': 'bg-event-color'}
+                  `}
+                >
+                  {' '}
+                  x1.2
+                </span>
+              </div>
+              <input
+                id='privateHouseCheckbox'
+                className='form-checkbox h-5 w-5 text-blue-500'
+                onChange={handleCheckedIsPrivateHouse}
+                type='checkbox'
+                checked={isPrivateHouse}
+              />
+            </label>
+          </div>
+          <OrderForm title='ВКАЖІТЬ ВАШУ АДРЕСУ'>
+            <InputForm
+              type='text'
+              label='Вулиця:*'
+              name='street'
+              register={register}
+              validationRules={{
                 required: 'Please wright your street',
                 minLength: {
-                  value: 4,
-                  message: 'min length 4',
+                  value: 2,
+                  message: 'Minimum 2 sumbols',
                 },
-              })}
-              className={cn('form-input', {
-                'form-input-error': errors.street,
-              })}
-              type='text'
+              }}
               value={street}
-              onChange={(e) => setStreet(e.target.value)}
+              onChangeFunction={(e) => setStreet(e.target.value)}
+              error={errors.street?.message}
             />
-          </label>
-          <InputForm
-            type='text'
-            label='Номер ЕУІЕ'
-            name='houseNumber'
-            register={register}
-            validationRules={{
-              required: 'Please write your house number',
-              // minLength: {
-              //   value: 1,
-              //   message: 'min ddddd 3',
-              // },
-            }}
-            value={houseNumber}
-            onChangeFunction={(e) => setHouseNumber(e.target.value)}
-            error={errors.houseNumber?.message}
-          />
-          {/* <label className='flex flex-col'>
-            <span className='text-sm'>Номер будинку:</span>
-            <p className='error-message '>{errors.houseNumber?.message}</p>
-            <input
-              {...register('houseNumber', {
-                required: 'Please wright your house number',
-              })}
-              className={cn('form-input', {
-                'form-input-error': errors.street,
-              })}
+            <InputForm
               type='text'
+              label='Номер будинку:*'
+              name='houseNumber'
+              register={register}
+              validationRules={{
+                required: 'Please write your house number',
+              }}
               value={houseNumber}
-              onChange={(e) => setHouseNumber(e.target.value)}
+              onChangeFunction={(e) => setHouseNumber(e.target.value)}
+              error={errors.houseNumber?.message}
             />
-          </label> */}
 
-          <label className='flex flex-col'>
-            <p className='error-message '>{errors.apartmentNumber?.message}</p>
-            <span className='text-sm'>Номер квартири:</span>
-            <input
-              {...register('apartmentNumber', {
-                required: 'Please wright your apartment number',
-              })}
-              className={cn('form-input', {
-                'form-input-error': errors.apartmentNumber,
-              })}
+            <InputForm
               type='text'
+              label='Номер квартири:'
+              name='apartmentNumber'
               value={apartmentNumber}
-              onChange={(e) => setApartmentNumber(e.target.value)}
+              onChangeFunction={(e) => setApartmentNumber(e.target.value)}
             />
-          </label>
 
-          <label className='flex flex-col'>
-            <span className='text-sm'>{`Номер під'їзду:`}</span>
-            <input
-              className='form-input'
+            <InputForm
               type='text'
-              value={floorNumber !== null ? floorNumber : ''}
-              onChange={(e) => setFloorNumber(e.target.value)}
+              label={`Номер під'їзду:`}
+              name='floorNumber'
+              value={floorNumber}
+              onChangeFunction={(e) => setFloorNumber(e.target.value)}
             />
-          </label>
-          <label className='flex flex-col'>
-            <span className='text-sm'>Поверх:</span>
-            <input
-              className='form-input'
+
+            <InputForm
               type='number'
-              value={intercomCode !== null ? intercomCode : ''}
-              onChange={(e) =>
+              label='Поверх:'
+              name='intercomCode'
+              value={intercomCode}
+              onChangeFunction={(e) =>
                 setIntercomCode(
                   e.target.value !== '' ? parseInt(e.target.value) : null
                 )
               }
             />
-          </label>
-        </form>
-      </div>
+          </OrderForm>
 
-      <div>
-        <h2>total price: {calculateTotalPrice()}$</h2>
+          <OrderForm title='КОНТАКТНІ ДАНІ'>
+            <InputForm
+              type='text'
+              label={`Ім'я та Прізвище`}
+              name='contactFullname'
+              register={register}
+              validationRules={{
+                required: 'Please wright your fullname',
+                minLength: {
+                  value: 3,
+                  message: 'Minimum 3 sumbols',
+                },
+              }}
+              value={contactFullname}
+              onChangeFunction={(e) => setContactFullname(e.target.value)}
+              error={errors.contactFullname?.message}
+            />
+            <InputForm
+              type='tel'
+              label={`Номер телефону`}
+              name='contactPhoneNumber'
+              register={register}
+              validationRules={{
+                required: 'Please wright your contact phone number',
+                pattern: {
+                  value: /^\d+$/,
+                  message: 'Only numbers are allowed',
+                },
+                minLength: {
+                  value: 9,
+                  message: 'Minimum 9 sumbols',
+                },
+                maxLength: {
+                  value: 12,
+                  message: 'Max 12 sumbols',
+                },
+              }}
+              value={contactPhoneNumber}
+              onChangeFunction={(e) => {
+                const value = e.target.value;
+                // Перевірка, чи введено лише цифри
+                if (/^\d*$/.test(value)) {
+                  setContactPhoneNumber(value === '' ? null : parseInt(value));
+                }
+              }}
+              error={errors.contactPhoneNumber?.message}
+            />
+            <InputForm
+              type='email'
+              label={`E-mail адреса`}
+              name='contactMail'
+              register={register}
+              validationRules={{
+                required: 'Enter email',
+                pattern: {
+                  value: /^\S+@\S+\.\S+$/,
+                  message:
+                    'Enter a valid email address with domain@example.com',
+                },
+                minLength: {
+                  value: 5,
+                  message: 'Minimum 5 sumbols',
+                },
+                maxLength: {
+                  value: 30,
+                  message: 'Max 30 sumbols',
+                },
+              }}
+              value={contactMail}
+              placeholder='domain@example.com'
+              onChangeFunction={(e) => {
+                const value = e.target.value;
+                setContactMail(value === '' ? null : value);
+              }}
+              error={errors.contactMail?.message}
+            />
+          </OrderForm>
+        </div>
+        <div className='order-contenr-summary w-2/5'>
+          <h2 className='sticky top-1'>
+            total price: {calculateTotalPrice()}$
+          </h2>
+        </div>
       </div>
 
       <button
@@ -243,7 +346,7 @@ const OrderPage = () => {
         })}
       >
         {' '}
-        Create order
+        {`Create order for ${calculateTotalPrice()}$`}
       </button>
 
       {isOpenCreateModal && (
@@ -258,6 +361,19 @@ const OrderPage = () => {
             After clicking the &apos;Buy&apos; button, your order will be
             processed.
           </p>
+        </Modal>
+      )}
+      {isLoadingCreateOrder && <p className='z-30'>Loading..</p>}
+
+      {errorMessage && (
+        <Modal
+          title='Somting wrong!!!'
+          cancelBtnTitle='Cancel'
+          successBtnTitle='Ok'
+          setIsOpenModal={() => setErrorMessage('')}
+          onClickSuccess={() => setErrorMessage('')}
+        >
+          <p>{errorMessage}</p>
         </Modal>
       )}
     </div>

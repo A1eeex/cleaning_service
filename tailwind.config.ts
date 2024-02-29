@@ -21,14 +21,17 @@ const config: Config = {
         'main-color': '#3e54a3',
         'main-bg-color': '#393837',
 
-        'header-bg-color': '#3b3b3b',
-        'body-bg-color': '#f9f9f9',
-        'main-page-text-color': '#393837',
+
+        'grey-color--100': '#fafafa',
+        'grey-color--200': '#0000000d',
 
         'event-color': '#ffea84',
         'event-color-active': '#ffc73b',
 
         'link-hover': '#00000014',
+        'error-bg': '#ff00001a',
+
+
       },
     },
   },

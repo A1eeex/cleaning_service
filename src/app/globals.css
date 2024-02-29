@@ -20,10 +20,10 @@
 
   /*forms*/
   .form-input{
-    @apply block w-full px-4 py-2 rounded-md bg-gray-100 border border-gray-300 focus:outline-none focus:border-indigo-500 placeholder-gray-500;
+    @apply text-[2.8vw] p-[1.6vw] block w-full rounded-md bg-grey-color--100  focus:outline-none focus:bg-grey-color--200 placeholder-gray-400;
   }
   .form-input-error{
-    @apply border-2 border-red-800 focus:border-red-800 placeholder-red-800;
+    @apply bg-error-bg focus:bg-error-bg;
   }
 
   .error-message {

@@ -20,6 +20,7 @@ const contactsSchema = new Schema<IContacts>({
   email: { type: String, required: true, default: null },
 });
 
+
 const orderSchema = new Schema<IOrder>(
   {
     status: {
@@ -48,11 +49,14 @@ const orderSchema = new Schema<IOrder>(
       type: Number,
       required: true,
     },
+    additionalOrders: {
+      type: [String], 
+      default: [],
+    },
     totalAmount: {
       type: Number,
       required: true,
     },
-
     createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }

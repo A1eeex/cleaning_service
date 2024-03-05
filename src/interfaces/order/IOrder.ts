@@ -9,6 +9,7 @@ export interface IOrder {
     privateHouse: boolean;
     roomsCount: number;
     bathroomCount: number;
+    additionalOrders: string[] | null;
     totalAmount: number;
     createdAt: Date;
   }

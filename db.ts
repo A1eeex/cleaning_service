@@ -9,6 +9,7 @@ export const connect = async () => {
     await mongoose.connect(mongoUrl);
     console.log('Connected to Mongoose DB 🚀🚀🚀 ');
   } catch (error: any) {
-    throw new Error('error connection => ', error.message);
+    console.error('Error while connecting to MongoDB1:', error);
+    throw new Error('error connection55 => ', error.message);
   }
 };

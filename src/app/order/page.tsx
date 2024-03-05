@@ -4,36 +4,42 @@ import CountItemButton from '@/components/atoms/CountItemButton';
 import Modal from '@/components/atoms/Modal';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import InputForm from '@/components/atoms/InputForm';
 import OrderForm from '@/components/molecules/OrderForm';
+
+import { calculateCleaningTimeRegular } from '@/utils/globalFunctons';
+import { Loader } from '../../components/atoms/Loader';
+import PrivateHouseCheckbox from '@/components/atoms/Buttons/PrivateHouseCheckbox ';
+import {
+  BASIC_PRICE_REGULAR_ORDER,
+  PRICE_PER_ONE_BATHROOM_COLEANING,
+  PRICE_PER_ONE_ROOM_COLEANING,
+  additionalOrdersList,
+} from '@/utils/globaVariables';
+import { IFormInput } from '@/interfaces/order/IFormInput';
 import Image from 'next/image';
-
-//icons
-import privateHouseIcon from '@/images/icons/privateHouse_icon.svg';
-
-interface IFormInput {
-  street: string;
-  houseNumber: string;
-
-  contactFullname: string;
-  contactPhoneNumber: number;
-  contactMail: string;
-}
 
 const OrderPage = () => {
   const {
     register,
-    watch,
     handleSubmit,
     formState: { errors },
   } = useForm<IFormInput>();
 
+  const [additionalOrdersDetalis, setAdditiOnalordersDetalis] =
+    useState(additionalOrdersList);
+
   const [roomsCount, setCountRooms] = useState<number>(1);
   const [bathroomCount, setBathroomCount] = useState<number>(1);
+  const [additionalOptionCount, setAdditionalOptionCount] = useState<
+    number | null
+  >(null);
   const [isPrivateHouse, setIsPrivateHouse] = useState<boolean>(false);
 
-  const [totalAmount, setTotalPrice] = useState<number>(100);
+  const [totalAmount, setTotalPrice] = useState<number>(
+    BASIC_PRICE_REGULAR_ORDER
+  );
 
   const [street, setStreet] = useState<string>('12');
   const [houseNumber, setHouseNumber] = useState<string>('22');
@@ -53,28 +59,42 @@ const OrderPage = () => {
 
   const [errorMessage, setErrorMessage] = useState<string>('');
 
-  //Icons
+  const cleaningDetalis = calculateCleaningTimeRegular(
+    roomsCount,
+    bathroomCount,
+    isPrivateHouse,
+    additionalOptionCount
+  );
+
+  const findAdditionalorderIsAdded = additionalOrdersDetalis.filter(
+    (order) => order.inOrder
+  );
+  const titleAdditionalorderIsAdded = findAdditionalorderIsAdded.map(
+    (order) => order.title
+  );
+  console.log(titleAdditionalorderIsAdded);
 
   const decreaseRoomsCount = () => {
     if (roomsCount > 1) {
       setCountRooms((prev) => prev - 1);
-      setTotalPrice((prev) => prev - 50);
+      setTotalPrice((prev) => prev - PRICE_PER_ONE_ROOM_COLEANING);
     }
   };
   const incrementRooms = () => {
     setCountRooms((prev) => prev + 1);
-    setTotalPrice((prev) => prev + 50);
+    setTotalPrice((prev) => prev + PRICE_PER_ONE_ROOM_COLEANING);
   };
+
   const decreaseBathroomCount = () => {
     if (bathroomCount > 1) {
       setBathroomCount((prev) => prev - 1);
-      setTotalPrice((prev) => prev - 30);
+      setTotalPrice((prev) => prev - PRICE_PER_ONE_BATHROOM_COLEANING);
     }
   };
 
   const incrementBathroom = () => {
     setBathroomCount((prev) => prev + 1);
-    setTotalPrice((prev) => prev + 30);
+    setTotalPrice((prev) => prev + PRICE_PER_ONE_BATHROOM_COLEANING);
   };
 
   const handleCheckedIsPrivateHouse = () => {
@@ -83,14 +103,13 @@ const OrderPage = () => {
   };
 
   const calculateTotalPrice = () => {
-    let price = totalAmount;
+    const countPrice = additionalOrdersDetalis.reduce(
+      (acc, item) => (item.inOrder ? acc + item.price : acc),
+      0
+    );
 
-    if (isPrivateHouse) {
-      price = totalAmount * 1.2;
-    } else {
-      price = totalAmount;
-    }
-    return price;
+    const basePrice = isPrivateHouse ? totalAmount * 1.2 : totalAmount;
+    return basePrice + countPrice;
   };
 
   const handlerCreateOrder = async (
@@ -101,7 +120,9 @@ const OrderPage = () => {
     const createOrder = {
       roomsCount,
       bathroomCount,
+      additionalOrders: titleAdditionalorderIsAdded,
       totalAmount: calculateTotalPrice(),
+      privateHouse: isPrivateHouse,
       address: {
         street,
         houseNumber,
@@ -121,12 +142,11 @@ const OrderPage = () => {
       const res = await axios.post(`/api/orders`, createOrder);
       setCountRooms(1);
       setBathroomCount(1);
-      setTotalPrice(100);
+      setTotalPrice(BASIC_PRICE_REGULAR_ORDER);
       setIsOpenCreateModal(false);
       console.log('Order created successfully:', res.data);
     } catch (err: any) {
       setErrorMessage(err.response.data.message);
-      // console.log(err ? err.response.data.message : '');
       setIsOpenCreateModal(false);
     } finally {
       setIsLoadingCreateOrder(false);
@@ -139,11 +159,30 @@ const OrderPage = () => {
     setIsOpenCreateModal(true);
   };
 
-  // useEffect(() => {
+  // Підрахунок кількості обраних елементів
+  useEffect(() => {
+    const countEach = additionalOrdersDetalis.reduce(
+      (acc, item) => (item.inOrder ? acc + 1 : acc),
+      0
+    );
 
-  // }, [isPrivateHouse]);
+    setAdditionalOptionCount(countEach);
+
+    console.log(countEach);
+  }, [additionalOrdersDetalis]);
+
+  const toggleAdditionalOrder = (id: number) => {
+    setAdditiOnalordersDetalis((prevState) => {
+      return prevState.map((detail) => {
+        if (detail.id === id) {
+          return { ...detail, inOrder: !detail.inOrder };
+        }
+        return detail;
+      });
+    });
+  };
   return (
-    <div>
+    <div className='px-8 py-8'>
       <div className='container-order-contenr flex w-full gap-4'>
         <div className='order-contenr-service w-3/5'>
           <h1>Клінінг клінінг</h1>
@@ -163,38 +202,29 @@ const OrderPage = () => {
               />
             </div>
 
-            <label
-              className={`flex items-center gap-2 w-fit border rounded-md p-2 transition-all duration-300 ${
-                isPrivateHouse && ' bg-event-color border-main-color'
-              }`}
-              htmlFor='privateHouseCheckbox'
-            >
-              <div className='flex items-center text-lg font-bold gap-2'>
-                <Image
-                  priority
-                  className='w-10'
-                  src={privateHouseIcon}
-                  alt='Private House icon'
-                />
-                {'Private House'}
-                <span
-                  className={`p-1 px-2 rounded-md transition-all duration-500
-                    ${isPrivateHouse ? ' bg-event-color-active': 'bg-event-color'}
-                  `}
-                >
-                  {' '}
-                  x1.2
-                </span>
-              </div>
-              <input
-                id='privateHouseCheckbox'
-                className='form-checkbox h-5 w-5 text-blue-500'
-                onChange={handleCheckedIsPrivateHouse}
-                type='checkbox'
-                checked={isPrivateHouse}
-              />
-            </label>
+            <PrivateHouseCheckbox
+              title='Private House'
+              isPrivateHouse={isPrivateHouse}
+              handleCheckedIsPrivateHouse={handleCheckedIsPrivateHouse}
+            />
           </div>
+
+          <div className='flex gap-2 flex-wrap justify-between w-full'>
+            {additionalOrdersDetalis.map((item) => (
+              <div
+                onClick={() => toggleAdditionalOrder(item.id)}
+                key={item.id}
+                className={`w-custom p-2 flex flex-col justify-center items-center ${
+                  item.inOrder ? 'bg-teal-600' : 'bg-main-color bg-opacity-25'
+                }`}
+              >
+                <Image className='w-14 h-14' src={item.icon} alt={item.title} />
+                <div>{item.title}</div>
+                <div> item.inOrder: {item.inOrder ? 'yes' : 'no'}</div>
+              </div>
+            ))}
+          </div>
+
           <OrderForm title='ВКАЖІТЬ ВАШУ АДРЕСУ'>
             <InputForm
               type='text'
@@ -332,10 +362,16 @@ const OrderPage = () => {
             />
           </OrderForm>
         </div>
-        <div className='order-contenr-summary w-2/5'>
-          <h2 className='sticky top-1'>
-            total price: {calculateTotalPrice()}$
-          </h2>
+        <div className='order-contenr-summary w-2/5 '>
+          <div className='sticky top-1'>
+            <h2>total price: {calculateTotalPrice()}$</h2>
+            <p>
+              {' '}
+              Приблизний час прибирання: {cleaningDetalis.hours} годин{' '}
+              {cleaningDetalis.minutes} хвилин
+            </p>
+            <p> кількість працівників: {cleaningDetalis.numberOfCleaners} </p>
+          </div>
         </div>
       </div>
 
@@ -348,6 +384,8 @@ const OrderPage = () => {
         {' '}
         {`Create order for ${calculateTotalPrice()}$`}
       </button>
+
+      {/* MODALS */}
 
       {isOpenCreateModal && (
         <Modal
@@ -363,7 +401,8 @@ const OrderPage = () => {
           </p>
         </Modal>
       )}
-      {isLoadingCreateOrder && <p className='z-30'>Loading..</p>}
+
+      {isLoadingCreateOrder && <Loader />}
 
       {errorMessage && (
         <Modal

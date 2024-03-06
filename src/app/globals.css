@@ -50,6 +50,11 @@
 
 
 
-.w-custom {
+.w-custom-additional-order {
   width: calc(50% - 0.35rem); /* Розраховуємо ширину, віднімаючи половину відступу gap-2 */
+}
+
+/* other */
+.row-title {
+  @apply  mb-2 text-2xl font-semibold uppercase text-black text-opacity-40;
 }

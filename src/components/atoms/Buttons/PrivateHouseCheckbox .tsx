@@ -16,7 +16,7 @@ const PrivateHouseCheckbox: React.FC<IPrivateHouseCheckboxProps> = ({
 }) => {
   return (
     <label
-      className={`flex items-center gap-2 p-2 w-fit border rounded-md transition-all duration-300 ${
+      className={`flex items-center gap-2 p-2 w-fit border rounded-md transition-all duration-300 cursor-pointer ${
         isPrivateHouse && ' bg-event-color border-main-color'
       }`}
       htmlFor='privateHouseCheckbox'

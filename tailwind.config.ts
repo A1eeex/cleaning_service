@@ -30,6 +30,7 @@ const config: Config = {
 
         'link-hover': '#00000014',
         'error-bg': '#ff00001a',
+        'success-color': '#a6d96a',
 
 
       },

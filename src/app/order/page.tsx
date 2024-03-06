@@ -18,8 +18,10 @@ import {
   additionalOrdersList,
 } from '@/utils/globaVariables';
 import { IFormInput } from '@/interfaces/order/IFormInput';
-import Image from 'next/image';
+import AdditionalOrderButton from '@/components/atoms/Buttons/AdditionalOrderButton';
 
+import cancelIcon from '@/images/icons/cancelBtn_icon.svg';
+import Image from 'next/image';
 const OrderPage = () => {
   const {
     register,
@@ -53,7 +55,9 @@ const OrderPage = () => {
   );
   const [contactMail, setContactMail] = useState<string | null>(null);
 
-  const [isOpenCreateModal, setIsOpenCreateModal] = useState(false);
+  const [isOpenCreateModal, setIsOpenCreateModal] = useState<boolean>(false);
+  const [isCreateOrderSuccessModal, setIsCreateOrderSuccessModal] =
+    useState<boolean>(false);
   const [isLoadingCreateOrder, setIsLoadingCreateOrder] =
     useState<boolean>(false);
 
@@ -67,12 +71,11 @@ const OrderPage = () => {
   );
 
   const findAdditionalorderIsAdded = additionalOrdersDetalis.filter(
-    (order) => order.inOrder
+    (order) => order.isOrdered
   );
   const titleAdditionalorderIsAdded = findAdditionalorderIsAdded.map(
     (order) => order.title
   );
-  console.log(titleAdditionalorderIsAdded);
 
   const decreaseRoomsCount = () => {
     if (roomsCount > 1) {
@@ -104,7 +107,7 @@ const OrderPage = () => {
 
   const calculateTotalPrice = () => {
     const countPrice = additionalOrdersDetalis.reduce(
-      (acc, item) => (item.inOrder ? acc + item.price : acc),
+      (acc, item) => (item.isOrdered ? acc + item.currentPrice : acc),
       0
     );
 
@@ -145,6 +148,7 @@ const OrderPage = () => {
       setTotalPrice(BASIC_PRICE_REGULAR_ORDER);
       setIsOpenCreateModal(false);
       console.log('Order created successfully:', res.data);
+      setIsCreateOrderSuccessModal(true);
     } catch (err: any) {
       setErrorMessage(err.response.data.message);
       setIsOpenCreateModal(false);
@@ -162,7 +166,7 @@ const OrderPage = () => {
   // Підрахунок кількості обраних елементів
   useEffect(() => {
     const countEach = additionalOrdersDetalis.reduce(
-      (acc, item) => (item.inOrder ? acc + 1 : acc),
+      (acc, item) => (item.isOrdered ? acc + 1 : acc),
       0
     );
 
@@ -175,7 +179,7 @@ const OrderPage = () => {
     setAdditiOnalordersDetalis((prevState) => {
       return prevState.map((detail) => {
         if (detail.id === id) {
-          return { ...detail, inOrder: !detail.inOrder };
+          return { ...detail, isOrdered: !detail.isOrdered };
         }
         return detail;
       });
@@ -185,8 +189,8 @@ const OrderPage = () => {
     <div className='px-8 py-8'>
       <div className='container-order-contenr flex w-full gap-4'>
         <div className='order-contenr-service w-3/5'>
-          <h1>Клінінг клінінг</h1>
-          <div className='flex flex-col gap-2'>
+          <h1 className='row-title'>Ваша квартира</h1>
+          <div className='flex flex-col gap-2 py-4'>
             <div className='flex gap-3'>
               <CountItemButton
                 subtraction={decreaseRoomsCount}
@@ -201,27 +205,28 @@ const OrderPage = () => {
                 titleOfCount='bathroom'
               />
             </div>
-
-            <PrivateHouseCheckbox
-              title='Private House'
-              isPrivateHouse={isPrivateHouse}
-              handleCheckedIsPrivateHouse={handleCheckedIsPrivateHouse}
-            />
+            <div className='flex items-center justify-center mt-2'>
+              <PrivateHouseCheckbox
+                title='Private House'
+                isPrivateHouse={isPrivateHouse}
+                handleCheckedIsPrivateHouse={handleCheckedIsPrivateHouse}
+              />
+            </div>
           </div>
 
-          <div className='flex gap-2 flex-wrap justify-between w-full'>
+          <div className='flex gap-2 flex-wrap justify-between w-full py-4'>
             {additionalOrdersDetalis.map((item) => (
-              <div
-                onClick={() => toggleAdditionalOrder(item.id)}
-                key={item.id}
-                className={`w-custom p-2 flex flex-col justify-center items-center ${
-                  item.inOrder ? 'bg-teal-600' : 'bg-main-color bg-opacity-25'
-                }`}
-              >
-                <Image className='w-14 h-14' src={item.icon} alt={item.title} />
-                <div>{item.title}</div>
-                <div> item.inOrder: {item.inOrder ? 'yes' : 'no'}</div>
-              </div>
+              <React.Fragment key={item.id}>
+                <AdditionalOrderButton
+                  currentPrice={item.currentPrice}
+                  isOrdered={item.isOrdered}
+                  oldPrice={item.oldPrice}
+                  productId={item.id}
+                  productTitle={item.title}
+                  toggleAdditionalOrder={() => toggleAdditionalOrder(item.id)}
+                  srcIcon={item.icon}
+                />
+              </React.Fragment>
             ))}
           </div>
 
@@ -362,30 +367,75 @@ const OrderPage = () => {
             />
           </OrderForm>
         </div>
-        <div className='order-contenr-summary w-2/5 '>
-          <div className='sticky top-1'>
-            <h2>total price: {calculateTotalPrice()}$</h2>
-            <p>
-              {' '}
-              Приблизний час прибирання: {cleaningDetalis.hours} годин{' '}
-              {cleaningDetalis.minutes} хвилин
+        <div className='order-contenr-summary w-2/5'>
+          <div className='sticky top-1 p-4 bg-gray-300 bg-opacity-30 rounded-lg shadow-md'>
+            <h2 className='font-bold text-xl mb-4'>
+              {`Прибирання квартири з ${roomsCount} ${
+                roomsCount > 1 ? 'житловими' : 'житловою'
+              } та ${bathroomCount} ${
+                bathroomCount > 1 ? 'ванними кімнатами' : 'ванною кімнатою'
+              }, кухня, коридор`}{' '}
+            </h2>
+            <p className='mb-2'>
+              Приблизний час прибирання: {cleaningDetalis.hours}{' '}
+              {cleaningDetalis.hours === 1
+                ? 'година'
+                : cleaningDetalis.hours >= 2 && cleaningDetalis.hours <= 4
+                ? 'години'
+                : 'годин'}
+              {cleaningDetalis.minutes !== 0 &&
+                `, ${cleaningDetalis.minutes} хвилин`}
             </p>
-            <p> кількість працівників: {cleaningDetalis.numberOfCleaners} </p>
+
+            <p className='mb-2'>
+              Клількість працівників: {cleaningDetalis.numberOfCleaners}
+            </p>
+
+            <div>
+              {findAdditionalorderIsAdded.length > 0 && (
+                <>
+                  <p className='font-bold mb-2'>Додаткові послуги:</p>
+                  {findAdditionalorderIsAdded.map((order) => (
+                    <div
+                      key={order.id}
+                      className='flex items-center justify-between border-b border-gray-300 py-2'
+                    >
+                      <span className='text-main-color'>{order.title}</span>
+                      <div
+                        className='cursor-pointer text-red-500'
+                        onClick={() => toggleAdditionalOrder(order.id)}
+                      >
+                        <Image
+                          className='w-5 opacity-50 hover:opacity-100 transition-all duration-300 ease-linear'
+                          src={cancelIcon}
+                          alt='cancelIcon'
+                        ></Image>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+            <p className='mt-4 mb-2'>
+              Total price:{' '}
+              <span className='font-bold'>{calculateTotalPrice()}$</span>{' '}
+            </p>
+            <button
+              onClick={handleSubmit(hanleCreateOrderBtn)}
+              className={cn(
+                'text-white bg-main-color px-4 py-2 rounded-lg hover:bg-success-color hover:text-black transition-all duration-300 ease-linear',
+                {
+                  // 'bg-red-700': isSomeFormError,
+                }
+              )}
+            >
+              {`Create order`}
+            </button>
           </div>
         </div>
       </div>
 
-      <button
-        onClick={handleSubmit(hanleCreateOrderBtn)}
-        className={cn('border-2 border-solid border-indigo-600 bg-orange-200', {
-          // 'bg-red-700': isSomeFormError,
-        })}
-      >
-        {' '}
-        {`Create order for ${calculateTotalPrice()}$`}
-      </button>
-
-      {/* MODALS */}
+      {/* ---------------MODALS------------ */}
 
       {isOpenCreateModal && (
         <Modal
@@ -399,6 +449,16 @@ const OrderPage = () => {
             After clicking the &apos;Buy&apos; button, your order will be
             processed.
           </p>
+        </Modal>
+      )}
+
+      {isCreateOrderSuccessModal && (
+        <Modal
+          title='Success!'
+          bottomButtons={false}
+          setIsOpenModal={() => setIsCreateOrderSuccessModal(false)}
+        >
+          <p>Your order Created!</p>
         </Modal>
       )}
 

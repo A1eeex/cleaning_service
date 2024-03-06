@@ -25,7 +25,7 @@ const Navigation = () => {
   ];
 
   return (
-    <nav>
+    <nav className='flex items-center justify-center'>
       <ul className='flex flex-row gap-2'>
         {navLink.map(({ name, href, icon }) => (
           <li

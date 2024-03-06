@@ -4,9 +4,9 @@ interface ModalProps {
   setIsOpenModal: (state: boolean) => void;
   title: string;
   children: ReactNode;
-  successBtnTitle: string;
-  cancelBtnTitle: string;
-  onClickSuccess: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  successBtnTitle?: string;
+  cancelBtnTitle?: string;
+  onClickSuccess?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   bottomButtons?: boolean;
 }
 

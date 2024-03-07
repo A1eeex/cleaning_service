@@ -1,3 +1,4 @@
+import { IAdditionalOrder } from "@/interfaces/order/IAdditionalOrder";
 
 export const calculateCleaningTimeRegular = (
   roomsCount: number,
@@ -29,4 +30,22 @@ export const calculateCleaningTimeRegular = (
 
   // console.log(minutes);
   return { hours, minutes, numberOfCleaners };
+};
+
+export const calculateTotalPrice = (
+  isPrivateHouse: boolean,
+  roomsPriceTotalAmount: number,
+  additionalOrdersDetalis: IAdditionalOrder[], 
+  discountPercent: number = 0
+) => {
+  const countAdditionalPrice = additionalOrdersDetalis.reduce(
+    (acc, item) => (item.isOrdered ? acc + item.currentPrice : acc),
+    0
+  );
+
+  const basePrice = isPrivateHouse ? roomsPriceTotalAmount * 1.2 : roomsPriceTotalAmount;
+  const totalPrice = basePrice + countAdditionalPrice;
+
+  const discountedPrice = totalPrice * (1 - discountPercent / 100);
+  return discountedPrice;
 };

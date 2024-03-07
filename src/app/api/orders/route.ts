@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connect } from '../../../../db';
-import Order from '../../../../models/Order';
+import Order from '../../../../schemas/Order';
 import { IOrder } from '@/interfaces/order/IOrder';
 
 export async function GET() {

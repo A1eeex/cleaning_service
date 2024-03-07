@@ -3,12 +3,15 @@ import cn from 'classnames';
 import CountItemButton from '@/components/atoms/CountItemButton';
 import Modal from '@/components/atoms/Modal';
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import InputForm from '@/components/atoms/InputForm';
 import OrderForm from '@/components/molecules/OrderForm';
 
-import { calculateCleaningTimeRegular } from '@/utils/globalFunctons';
+import {
+  calculateCleaningTimeRegular,
+  calculateTotalPrice,
+} from '@/utils/globalFunctons';
 import { Loader } from '../../components/atoms/Loader';
 import PrivateHouseCheckbox from '@/components/atoms/Buttons/PrivateHouseCheckbox ';
 import {
@@ -22,15 +25,26 @@ import AdditionalOrderButton from '@/components/atoms/Buttons/AdditionalOrderBut
 
 import cancelIcon from '@/images/icons/cancelBtn_icon.svg';
 import Image from 'next/image';
+import { IPromoCode } from '@/interfaces/promo-code/IPromoCode';
+import { IAdditionalOrder } from '@/interfaces/order/IAdditionalOrder';
 const OrderPage = () => {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<IFormInput>();
+  const [discountProc, setDiscountProc] = useState<number>(0);
+  const [promoCodes, setPromoCodes] = useState<IPromoCode[]>([]);
+  const [promoCodeInput, setPromoCodeInput] = useState<string>('');
+  const [roomsPriceTotalAmount, setRoomsPriceTotalAmount] = useState<number>(
+    BASIC_PRICE_REGULAR_ORDER
+  );
+  const [mainTotalOrderPrice, setMainTotalOrderPrice] = useState<number>(
+    roomsPriceTotalAmount
+  );
 
   const [additionalOrdersDetalis, setAdditiOnalordersDetalis] =
-    useState(additionalOrdersList);
+    useState<IAdditionalOrder[]>(additionalOrdersList);
 
   const [roomsCount, setCountRooms] = useState<number>(1);
   const [bathroomCount, setBathroomCount] = useState<number>(1);
@@ -38,10 +52,6 @@ const OrderPage = () => {
     number | null
   >(null);
   const [isPrivateHouse, setIsPrivateHouse] = useState<boolean>(false);
-
-  const [totalAmount, setTotalPrice] = useState<number>(
-    BASIC_PRICE_REGULAR_ORDER
-  );
 
   const [street, setStreet] = useState<string>('12');
   const [houseNumber, setHouseNumber] = useState<string>('22');
@@ -77,42 +87,59 @@ const OrderPage = () => {
     (order) => order.title
   );
 
+  useEffect(() => {
+    const totalPrice = calculateTotalPrice(
+      isPrivateHouse,
+      roomsPriceTotalAmount,
+      additionalOrdersDetalis,
+      discountProc
+    );
+    // Підрахунок кількості обраних елементів
+    const countEach = additionalOrdersDetalis.reduce(
+      (acc, item) => (item.isOrdered ? acc + 1 : acc),
+      0
+    );
+
+    setAdditionalOptionCount(countEach);
+
+    setMainTotalOrderPrice(totalPrice);
+  }, [roomsPriceTotalAmount, isPrivateHouse, additionalOrdersDetalis]);
+
   const decreaseRoomsCount = () => {
     if (roomsCount > 1) {
       setCountRooms((prev) => prev - 1);
-      setTotalPrice((prev) => prev - PRICE_PER_ONE_ROOM_COLEANING);
+      setRoomsPriceTotalAmount((prev) => prev - PRICE_PER_ONE_ROOM_COLEANING);
     }
   };
   const incrementRooms = () => {
     setCountRooms((prev) => prev + 1);
-    setTotalPrice((prev) => prev + PRICE_PER_ONE_ROOM_COLEANING);
+    setRoomsPriceTotalAmount((prev) => prev + PRICE_PER_ONE_ROOM_COLEANING);
   };
 
   const decreaseBathroomCount = () => {
     if (bathroomCount > 1) {
       setBathroomCount((prev) => prev - 1);
-      setTotalPrice((prev) => prev - PRICE_PER_ONE_BATHROOM_COLEANING);
+      setRoomsPriceTotalAmount(
+        (prev) => prev - PRICE_PER_ONE_BATHROOM_COLEANING
+      );
     }
   };
 
   const incrementBathroom = () => {
     setBathroomCount((prev) => prev + 1);
-    setTotalPrice((prev) => prev + PRICE_PER_ONE_BATHROOM_COLEANING);
+    setRoomsPriceTotalAmount((prev) => prev + PRICE_PER_ONE_BATHROOM_COLEANING);
   };
 
   const handleCheckedIsPrivateHouse = () => {
     setIsPrivateHouse(!isPrivateHouse);
-    calculateTotalPrice();
-  };
-
-  const calculateTotalPrice = () => {
-    const countPrice = additionalOrdersDetalis.reduce(
-      (acc, item) => (item.isOrdered ? acc + item.currentPrice : acc),
-      0
+    setMainTotalOrderPrice(
+      calculateTotalPrice(
+        isPrivateHouse,
+        roomsPriceTotalAmount,
+        additionalOrdersDetalis
+      )
     );
-
-    const basePrice = isPrivateHouse ? totalAmount * 1.2 : totalAmount;
-    return basePrice + countPrice;
+    // calculateTotalPrice();
   };
 
   const handlerCreateOrder = async (
@@ -124,7 +151,12 @@ const OrderPage = () => {
       roomsCount,
       bathroomCount,
       additionalOrders: titleAdditionalorderIsAdded,
-      totalAmount: calculateTotalPrice(),
+      totalAmount: calculateTotalPrice(
+        isPrivateHouse,
+        roomsPriceTotalAmount,
+        additionalOrdersDetalis,
+        discountProc
+      ),
       privateHouse: isPrivateHouse,
       address: {
         street,
@@ -145,7 +177,7 @@ const OrderPage = () => {
       const res = await axios.post(`/api/orders`, createOrder);
       setCountRooms(1);
       setBathroomCount(1);
-      setTotalPrice(BASIC_PRICE_REGULAR_ORDER);
+      setRoomsPriceTotalAmount(BASIC_PRICE_REGULAR_ORDER);
       setIsOpenCreateModal(false);
       console.log('Order created successfully:', res.data);
       setIsCreateOrderSuccessModal(true);
@@ -163,18 +195,6 @@ const OrderPage = () => {
     setIsOpenCreateModal(true);
   };
 
-  // Підрахунок кількості обраних елементів
-  useEffect(() => {
-    const countEach = additionalOrdersDetalis.reduce(
-      (acc, item) => (item.isOrdered ? acc + 1 : acc),
-      0
-    );
-
-    setAdditionalOptionCount(countEach);
-
-    console.log(countEach);
-  }, [additionalOrdersDetalis]);
-
   const toggleAdditionalOrder = (id: number) => {
     setAdditiOnalordersDetalis((prevState) => {
       return prevState.map((detail) => {
@@ -185,6 +205,46 @@ const OrderPage = () => {
       });
     });
   };
+
+  const getAllPromoCodes = async () => {
+    try {
+      const responce = await axios.get('api/promo-codes');
+      setPromoCodes(responce.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    getAllPromoCodes();
+  }, []);
+
+  const handleSubmitPromoCode = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const isCorrectPomocode = promoCodes.find(
+      (code) => code.title === promoCodeInput
+    );
+
+    if (isCorrectPomocode) {
+      console.log('yes');
+      setDiscountProc(isCorrectPomocode.discount);
+      
+      setMainTotalOrderPrice(
+        calculateTotalPrice(
+          isPrivateHouse,
+          roomsPriceTotalAmount,
+          additionalOrdersDetalis,
+          discountProc
+        )
+      );
+    } else {
+      console.log('no');
+    }
+  };
+
+  console.log('yo>=> ', mainTotalOrderPrice);
+
   return (
     <div className='px-8 py-8'>
       <div className='container-order-contenr flex w-full gap-4'>
@@ -418,8 +478,34 @@ const OrderPage = () => {
             </div>
             <p className='mt-4 mb-2'>
               Total price:{' '}
-              <span className='font-bold'>{calculateTotalPrice()}$</span>{' '}
+              <span className='font-bold'>{mainTotalOrderPrice}$</span>{' '}
             </p>
+
+            <form
+              onSubmit={handleSubmitPromoCode}
+              className='flex items-center'
+            >
+              <label className='w-1/5 mr-2' htmlFor='promoCode'>
+                Промокод:
+              </label>
+              <input
+                type='text'
+                id='promoCode'
+                value={promoCodeInput}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setPromoCodeInput(e.target.value)
+                }
+                placeholder='Введіть промокод'
+                className='w-3/5 mr-2 p-2 border border-gray-300 rounded-md'
+              />
+              <button
+                type='submit'
+                className='w-1/5 bg-blue-500 text-white py-2 px-4 rounded-md'
+              >
+                Використати
+              </button>
+            </form>
+
             <button
               onClick={handleSubmit(hanleCreateOrderBtn)}
               className={cn(

@@ -2,21 +2,11 @@
 
 import axios from 'axios';
 import React, { useCallback, useEffect, useState } from 'react';
-import { IOrder } from '../../../models/Order';
 import Modal from '@/components/atoms/Modal';
+import { IOrder } from '@/interfaces/order/IOrder';
 
 const AdminPage = () => {
   const [orders, setOrders] = useState<IOrder[]>([]);
-  const [isOpenModal, setIsOpenModal] = useState(false);
-
-
-  const handleCheckout = useCallback(() => {
-    console.log('handleCheckout');
-
-    setIsOpenModal(false);
-
-    // navigate('./new_page');
-  }, []);
 
   const getAllOrders = async () => {
     try {
@@ -44,21 +34,6 @@ const AdminPage = () => {
           <li>createdAt:{order.createdAt.toLocaleString()}</li>
         </ul>
       ))}
-
-      {isOpenModal && (
-        <Modal
-          title='Are you sure you want to buy?'
-          cancelBtnTitle='Cancel'
-          successBtnTitle='Buy'
-          setIsOpenModal={setIsOpenModal}
-          onClickSuccess={handleCheckout}
-        >
-          <p>
-            After clicking the &apos;Buy&apos; button, your order will be
-            processed.
-          </p>
-        </Modal>
-      )}
 
     </div>
   );

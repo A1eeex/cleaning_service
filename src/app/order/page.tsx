@@ -33,9 +33,9 @@ const OrderPage = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<IFormInput>();
-  const [discountProc, setDiscountProc] = useState<number>(0);
+  const [discountPercent, setDiscountPercen] = useState<number>(0);
   const [promoCodes, setPromoCodes] = useState<IPromoCode[]>([]);
-  const [promoCodeInput, setPromoCodeInput] = useState<string>('');
+  const [promoCodeInput, setPromoCodeInput] = useState<string>('clean');
   const [roomsPriceTotalAmount, setRoomsPriceTotalAmount] = useState<number>(
     BASIC_PRICE_REGULAR_ORDER
   );
@@ -87,12 +87,19 @@ const OrderPage = () => {
     (order) => order.title
   );
 
+  const priceWithOutDiscountPercen = calculateTotalPrice(
+    isPrivateHouse,
+    roomsPriceTotalAmount,
+    additionalOrdersDetalis,
+    0
+  );
+  console.log(priceWithOutDiscountPercen);
   useEffect(() => {
     const totalPrice = calculateTotalPrice(
       isPrivateHouse,
       roomsPriceTotalAmount,
       additionalOrdersDetalis,
-      discountProc
+      discountPercent
     );
     // Підрахунок кількості обраних елементів
     const countEach = additionalOrdersDetalis.reduce(
@@ -101,7 +108,6 @@ const OrderPage = () => {
     );
 
     setAdditionalOptionCount(countEach);
-
     setMainTotalOrderPrice(totalPrice);
   }, [roomsPriceTotalAmount, isPrivateHouse, additionalOrdersDetalis]);
 
@@ -139,7 +145,6 @@ const OrderPage = () => {
         additionalOrdersDetalis
       )
     );
-    // calculateTotalPrice();
   };
 
   const handlerCreateOrder = async (
@@ -151,12 +156,7 @@ const OrderPage = () => {
       roomsCount,
       bathroomCount,
       additionalOrders: titleAdditionalorderIsAdded,
-      totalAmount: calculateTotalPrice(
-        isPrivateHouse,
-        roomsPriceTotalAmount,
-        additionalOrdersDetalis,
-        discountProc
-      ),
+      totalAmount: mainTotalOrderPrice.toFixed(2),
       privateHouse: isPrivateHouse,
       address: {
         street,
@@ -228,14 +228,13 @@ const OrderPage = () => {
 
     if (isCorrectPomocode) {
       console.log('yes');
-      setDiscountProc(isCorrectPomocode.discount);
-      
+      setDiscountPercen(() => isCorrectPomocode.discount);
       setMainTotalOrderPrice(
         calculateTotalPrice(
           isPrivateHouse,
           roomsPriceTotalAmount,
           additionalOrdersDetalis,
-          discountProc
+          isCorrectPomocode.discount
         )
       );
     } else {
@@ -243,12 +242,12 @@ const OrderPage = () => {
     }
   };
 
-  console.log('yo>=> ', mainTotalOrderPrice);
+  console.log('mainTotal => ', mainTotalOrderPrice.toFixed(2));
 
   return (
     <div className='px-8 py-8'>
-      <div className='container-order-contenr flex w-full gap-4'>
-        <div className='order-contenr-service w-3/5'>
+      <div className='container-order-contenr flex flex-col lg:flex-row w-full gap-4'>
+        <div className='order-contenr-service w-full lg:w-3/5'>
           <h1 className='row-title'>Ваша квартира</h1>
           <div className='flex flex-col gap-2 py-4'>
             <div className='flex gap-3'>
@@ -427,7 +426,7 @@ const OrderPage = () => {
             />
           </OrderForm>
         </div>
-        <div className='order-contenr-summary w-2/5'>
+        <div className='order-contenr-summary w-full lg:w-2/5 p-4'>
           <div className='sticky top-1 p-4 bg-gray-300 bg-opacity-30 rounded-lg shadow-md'>
             <h2 className='font-bold text-xl mb-4'>
               {`Прибирання квартири з ${roomsCount} ${
@@ -454,7 +453,7 @@ const OrderPage = () => {
             <div>
               {findAdditionalorderIsAdded.length > 0 && (
                 <>
-                  <p className='font-bold mb-2'>Додаткові послуги:</p>
+                  <p className='font-bold mb-2 text-lg'>Додаткові послуги:</p>
                   {findAdditionalorderIsAdded.map((order) => (
                     <div
                       key={order.id}
@@ -476,35 +475,52 @@ const OrderPage = () => {
                 </>
               )}
             </div>
-            <p className='mt-4 mb-2'>
+            <div className='mt-4 mb-2 text-lg'>
               Total price:{' '}
-              <span className='font-bold'>{mainTotalOrderPrice}$</span>{' '}
-            </p>
+              <div className='flex items-center'>
+                <span className='text-xl font-bold mr-2'>
+                  {mainTotalOrderPrice.toFixed(2)}$
+                </span>{' '}
+                {discountPercent > 0 && (
+                  <span className='text-red-700 line-through text-sm font-bold'>
+                    {priceWithOutDiscountPercen.toFixed(2)}$
+                  </span>
+                )}
+              </div>
+            </div>
 
-            <form
-              onSubmit={handleSubmitPromoCode}
-              className='flex items-center'
-            >
-              <label className='w-1/5 mr-2' htmlFor='promoCode'>
-                Промокод:
-              </label>
-              <input
-                type='text'
-                id='promoCode'
-                value={promoCodeInput}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setPromoCodeInput(e.target.value)
-                }
-                placeholder='Введіть промокод'
-                className='w-3/5 mr-2 p-2 border border-gray-300 rounded-md'
-              />
-              <button
-                type='submit'
-                className='w-1/5 bg-blue-500 text-white py-2 px-4 rounded-md'
+            {discountPercent > 0 ? (
+              <div className='bg-green-500 text-white font-bold rounded-md p-3 shadow-md mb-4'>
+                Промокод успішно застосовано!
+              </div>
+            ) : (
+              <form
+                onSubmit={handleSubmitPromoCode}
+                className='flex flex-col items-start my-4'
               >
-                Використати
-              </button>
-            </form>
+                <label className='text-gray-700 mb-2 text-lg' htmlFor='promoCode'>
+                  Промокод:
+                </label>
+                <div className='flex items-center w-full'>
+                  <input
+                    type='text'
+                    id='promoCode'
+                    value={promoCodeInput}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setPromoCodeInput(e.target.value)
+                    }
+                    placeholder='Введіть промокод'
+                    className='w-3/5 mr-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500'
+                  />
+                  <button
+                    type='submit'
+                    className='w-2/5 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600 transition duration-300'
+                  >
+                    Використати
+                  </button>
+                </div>
+              </form>
+            )}
 
             <button
               onClick={handleSubmit(hanleCreateOrderBtn)}

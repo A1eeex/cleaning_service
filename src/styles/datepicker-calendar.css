@@ -1,0 +1,74 @@
+/* datepicker CALENDAR */
+
+.react-datepicker {
+  width: 75%;
+
+  .react-datepicker__month-container {
+    float: none;
+  }
+
+  .react-datepicker__time-container {
+    width: 25%;
+    right: -25%;
+
+    .react-datepicker__time {
+      .react-datepicker__time-box {
+        width: 100%;
+
+        .react-datepicker__time-list::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .react-datepicker__time-list {
+          height: 255px !important;
+        }
+
+        .react-datepicker__time-list-item--disabled {
+          display: none;
+        }
+
+        .react-datepicker__time-list::-webkit-scrollbar-thumb {
+          background-color: #3e54a3; /* колір пальця прокрутки */
+          border-radius: 4px; /* закруглені кути */
+        }
+      }
+    }
+  }
+
+  .react-datepicker__month-container
+    .react-datepicker__month
+    .react-datepicker__week
+    .react-datepicker__day {
+    width: calc(90% / 7);
+    line-height: 2rem;
+
+    &--selected {
+      background-color: #3e54a3 !important;
+      border: 1px solid #3e54a3 !important;
+    }
+
+    &--keyboard-selected.react-datepicker__day {
+      background-color: transparent !important;
+    }
+
+    &--today {
+      border: 1px solid red;
+      border-radius: 0.3rem;
+    }
+  }
+
+  .react-datepicker__month-container .react-datepicker__header {
+    background-color: #3e54a3;
+    color: white;
+
+    .react-datepicker__current-month {
+      background-color: #3e54a3;
+      color: white;
+    }
+
+    .react-datepicker__day-names .react-datepicker__day-name {
+      width: calc(90% / 7);
+      line-height: 2rem;
+    }
+  }
+}

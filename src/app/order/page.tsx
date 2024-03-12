@@ -1,10 +1,20 @@
 'use client';
+import DatePicker, { registerLocale, setDefaultLocale } from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import uk from 'date-fns/locale/uk'; // Імпортуємо локалізацію
+
 import cn from 'classnames';
 import CountItemButton from '@/components/atoms/CountItemButton';
 import Modal from '@/components/atoms/Modal';
 import axios from 'axios';
-import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, {
+  ChangeEvent,
+  FormEvent,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import InputForm from '@/components/atoms/InputForm';
 import OrderForm from '@/components/molecules/OrderForm';
 
@@ -27,15 +37,22 @@ import cancelIcon from '@/images/icons/cancelBtn_icon.svg';
 import Image from 'next/image';
 import { IPromoCode } from '@/interfaces/promo-code/IPromoCode';
 import { IAdditionalOrder } from '@/interfaces/order/IAdditionalOrder';
+
+import helpImage from '@/images/icons/help_icon.svg';
+import Link from 'next/link';
+import { fileURLToPath } from 'url';
+
 const OrderPage = () => {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<IFormInput>();
   const [discountPercent, setDiscountPercen] = useState<number>(0);
   const [promoCodes, setPromoCodes] = useState<IPromoCode[]>([]);
   const [promoCodeInput, setPromoCodeInput] = useState<string>('clean');
+
   const [roomsPriceTotalAmount, setRoomsPriceTotalAmount] = useState<number>(
     BASIC_PRICE_REGULAR_ORDER
   );
@@ -72,7 +89,18 @@ const OrderPage = () => {
     useState<boolean>(false);
 
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [startDate, setStartDate] = useState<Date | null>(null);
 
+  // Створюємо об'єкти Date для minTime і maxTime
+  const minTime = new Date();
+  minTime.setHours(7, 0);
+
+  const maxTime = new Date();
+  maxTime.setHours(20, 0); 
+
+  const isTimeValid = (date) => {
+    return date >= minTime && date <= maxTime;
+  };
   const cleaningDetalis = calculateCleaningTimeRegular(
     roomsCount,
     bathroomCount,
@@ -93,7 +121,7 @@ const OrderPage = () => {
     additionalOrdersDetalis,
     0
   );
-  console.log(priceWithOutDiscountPercen);
+
   useEffect(() => {
     const totalPrice = calculateTotalPrice(
       isPrivateHouse,
@@ -242,13 +270,22 @@ const OrderPage = () => {
     }
   };
 
-  console.log('mainTotal => ', mainTotalOrderPrice.toFixed(2));
+  console.log('startDate => ', startDate);
 
   return (
     <div className='px-8 py-8'>
       <div className='container-order-contenr flex flex-col lg:flex-row w-full gap-4'>
         <div className='order-contenr-service w-full lg:w-3/5'>
-          <h1 className='row-title'>Ваша квартира</h1>
+          <Link
+            href={'/what-we-clean'}
+            className='flex items-center justify-between'
+          >
+            <h1 className='row-title'>Ваша квартира</h1>
+            <p className='flex items-center gap-3'>
+              <Image className='w-4' src={helpImage} alt='help_icon' />
+              Що входить у прибирання квартири?
+            </p>
+          </Link>
           <div className='flex flex-col gap-2 py-4'>
             <div className='flex gap-3'>
               <CountItemButton
@@ -345,6 +382,55 @@ const OrderPage = () => {
                   e.target.value !== '' ? parseInt(e.target.value) : null
                 )
               }
+            />
+            <Controller
+              name='calendar'
+              control={control}
+              defaultValue={startDate}
+              rules={{ required: 'Start date is required',
+              validate: (value) => {
+                if (!value || (value && value.getHours() === 0 && value.getMinutes() === 0)) {
+                  return "Please select a valid time"; // Виводимо помилку, якщо час дорівнює 00:00
+                }
+                return true;
+              } }} 
+              defaultValue={startDate}
+              render={({ field, fieldState }) => (
+                <div>
+                  <DatePicker
+                    {...field}
+                    status={fieldState.error ? 'error' : 'success'}
+                    name={field.name}
+                    showTimeSelect
+                    selected={field.value}
+                    onChange={(date) => {
+                      setStartDate(date);
+                      field.onChange(date);
+                    }}
+                    onBlur={() => field.onBlur()}
+                    timeCaption='Час'
+                    locale={uk}
+                    minTime={minTime}
+                    maxTime={maxTime}
+                    inline
+                    todayButton='Сьогодні'
+                    ref={(el) => {
+                      if (el) {
+                        field.ref(el.input); 
+                      }
+                    }}
+                  />
+                  {fieldState.error && (
+                    <div
+                      className={
+                        'border-2 border-red-800 testt2 w-fit font-bold'
+                      }
+                    >
+                      {fieldState.error?.message}
+                    </div>
+                  )}
+                </div>
+              )}
             />
           </OrderForm>
 
@@ -490,7 +576,7 @@ const OrderPage = () => {
             </div>
 
             {discountPercent > 0 ? (
-              <div className='bg-green-500 text-white font-bold rounded-md p-3 shadow-md mb-4'>
+              <div className='flex items-center justify-center bg-green-500 text-white font-bold rounded-md p-3 shadow-md mb-4'>
                 Промокод успішно застосовано!
               </div>
             ) : (
@@ -498,7 +584,10 @@ const OrderPage = () => {
                 onSubmit={handleSubmitPromoCode}
                 className='flex flex-col items-start my-4'
               >
-                <label className='text-gray-700 mb-2 text-lg' htmlFor='promoCode'>
+                <label
+                  className='text-gray-700 mb-2 text-lg'
+                  htmlFor='promoCode'
+                >
                   Промокод:
                 </label>
                 <div className='flex items-center w-full'>
@@ -514,7 +603,7 @@ const OrderPage = () => {
                   />
                   <button
                     type='submit'
-                    className='w-2/5 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600 transition duration-300'
+                    className='w-2/5 bg-main-color text-white hover:text-black py-2 px-4 rounded-md hover:bg-event-color-active focus:outline-none focus:bg-event-color-active transition-all duration-300 ease-linear'
                   >
                     Використати
                   </button>
@@ -525,7 +614,7 @@ const OrderPage = () => {
             <button
               onClick={handleSubmit(hanleCreateOrderBtn)}
               className={cn(
-                'text-white bg-main-color px-4 py-2 rounded-lg hover:bg-success-color hover:text-black transition-all duration-300 ease-linear',
+                'text-white w-full bg-main-color px-4 py-2 rounded-lg hover:bg-success-color hover:text-black transition-all duration-300 ease-linear',
                 {
                   // 'bg-red-700': isSomeFormError,
                 }

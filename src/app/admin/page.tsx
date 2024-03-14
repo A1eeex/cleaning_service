@@ -16,26 +16,52 @@ const AdminPage = () => {
       console.log(err);
     }
   };
-
+  // const cleaningDate = (cleaningDate:any) => new Date(cleaningDate);
   useEffect(() => {
     getAllOrders();
   }, []);
 
-  return (
-    <div className='flex flex-col gap-3'>
-      {orders.map((order) => (
-        <ul key={order._id} className='bg-orange-300'>
-          <li>id:{order._id}</li>
-          <li>status:{order.status}</li>
-          <li>totalAmount:{order.totalAmount}</li>
-          <li>roomsCount:{order.roomsCount}</li>
-          <li>bathroomCount:{order.bathroomCount}</li>
-          <li>privateHouse:{order.privateHouse ? 'Yes' : 'No'}</li>
-          <li>createdAt:{order.createdAt.toLocaleString()}</li>
-        </ul>
-      ))}
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      console.log(orderId);
+      await axios.delete(`/api/orders/${orderId}`);
+      getAllOrders();
 
+    } catch (error) {
+      console.error('Error deleting card:', error);
+    }
+  };
+  return (
+    <div className="grid gap-4">
+  {orders.map((order) => (
+    <div key={order._id} className="p-6 rounded-md shadow-md bg-gray-100">
+      <ul>
+        <li className="font-semibold">ID: {order._id}</li>
+        <li>Status: {order.status}</li>
+        <li>Total Amount: {order.totalAmount}</li>
+        <li>Rooms Count: {order.roomsCount}</li>
+        <li>Bathroom Count: {order.bathroomCount}</li>
+        <li>Private House: {order.privateHouse ? 'Yes' : 'No'}</li>
+        <li>Created At: {new Date(order.createdAt).toLocaleString()}</li>
+        <li className="flex items-center">
+          Cleaning Date:
+          <div className="ml-2">
+            <span>Date:</span> {new Date(order.cleaningDate).toLocaleDateString()}
+          </div>
+          <div className="ml-2">
+            <span>Time:</span> {new Date(order.cleaningDate).toLocaleTimeString()}
+          </div>
+        </li>
+      </ul>
+      <button 
+        onClick={() => handleDeleteOrder(order._id)} 
+        className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none"
+      >
+        Delete Order
+      </button>
     </div>
+  ))}
+</div>
   );
 };
 

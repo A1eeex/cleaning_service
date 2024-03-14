@@ -7,13 +7,7 @@ import cn from 'classnames';
 import CountItemButton from '@/components/atoms/CountItemButton';
 import Modal from '@/components/atoms/Modal';
 import axios from 'axios';
-import React, {
-  ChangeEvent,
-  FormEvent,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import InputForm from '@/components/atoms/InputForm';
 import OrderForm from '@/components/molecules/OrderForm';
@@ -40,7 +34,6 @@ import { IAdditionalOrder } from '@/interfaces/order/IAdditionalOrder';
 
 import helpImage from '@/images/icons/help_icon.svg';
 import Link from 'next/link';
-import { fileURLToPath } from 'url';
 
 const OrderPage = () => {
   const {
@@ -96,11 +89,11 @@ const OrderPage = () => {
   minTime.setHours(7, 0);
 
   const maxTime = new Date();
-  maxTime.setHours(20, 0); 
+  maxTime.setHours(20, 0);
 
-  const isTimeValid = (date) => {
-    return date >= minTime && date <= maxTime;
-  };
+  // const isTimeValid = (date) => {
+  //   return date >= minTime && date <= maxTime;
+  // };
   const cleaningDetalis = calculateCleaningTimeRegular(
     roomsCount,
     bathroomCount,
@@ -184,6 +177,7 @@ const OrderPage = () => {
       roomsCount,
       bathroomCount,
       additionalOrders: titleAdditionalorderIsAdded,
+      cleaningDate: startDate,
       totalAmount: mainTotalOrderPrice.toFixed(2),
       privateHouse: isPrivateHouse,
       address: {
@@ -199,7 +193,7 @@ const OrderPage = () => {
         email: contactMail,
       },
     };
-
+    console.log(createOrder);
     try {
       setIsLoadingCreateOrder(true);
       const res = await axios.post(`/api/orders`, createOrder);
@@ -281,13 +275,13 @@ const OrderPage = () => {
             className='flex items-center justify-between'
           >
             <h1 className='row-title'>Ваша квартира</h1>
-            <p className='flex items-center gap-3'>
+            <p className='flex items-center gap-3 hover:text-event-color-active transition-all duration-300 ease-linear'>
               <Image className='w-4' src={helpImage} alt='help_icon' />
               Що входить у прибирання квартири?
             </p>
           </Link>
           <div className='flex flex-col gap-2 py-4'>
-            <div className='flex gap-3'>
+            <div className='flex gap-3 flex-col lg:flex-row'>
               <CountItemButton
                 subtraction={decreaseRoomsCount}
                 addition={incrementRooms}
@@ -384,17 +378,23 @@ const OrderPage = () => {
               }
             />
             <Controller
-              name='calendar'
+              name='cleaningDate'
               control={control}
-              defaultValue={startDate}
-              rules={{ required: 'Start date is required',
-              validate: (value) => {
-                if (!value || (value && value.getHours() === 0 && value.getMinutes() === 0)) {
-                  return "Please select a valid time"; // Виводимо помилку, якщо час дорівнює 00:00
-                }
-                return true;
-              } }} 
-              defaultValue={startDate}
+              // defaultValue={startDate}
+              rules={{
+                required: 'Start date is required',
+                validate: (value) => {
+                  if (
+                    !value ||
+                    (value &&
+                      value.getHours() === 0 &&
+                      value.getMinutes() === 0)
+                  ) {
+                    return 'Please select a valid time'; // Виводимо помилку, якщо час дорівнює 00:00
+                  }
+                  return true;
+                },
+              }}
               render={({ field, fieldState }) => (
                 <div>
                   <DatePicker
@@ -416,7 +416,7 @@ const OrderPage = () => {
                     todayButton='Сьогодні'
                     ref={(el) => {
                       if (el) {
-                        field.ref(el.input); 
+                        field.ref(el.input);
                       }
                     }}
                   />

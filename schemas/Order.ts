@@ -57,6 +57,10 @@ const orderSchema = new Schema<IOrder>(
       type: Number,
       required: true,
     },
+    cleaningDate: {
+      type: Date,
+      required: true,
+    },
     createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }

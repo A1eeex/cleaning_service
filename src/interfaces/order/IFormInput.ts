@@ -1,7 +1,9 @@
 export interface IFormInput {
-    street: string;
-    houseNumber: string;
-    contactFullname: string;
-    contactPhoneNumber: number;
-    contactMail: string;
-  }
+  name?: string;
+  street: string;
+  houseNumber: string;
+  contactFullname: string;
+  contactPhoneNumber: number;
+  contactMail: string;
+  cleaningDate: Date; 
+}

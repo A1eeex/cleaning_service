@@ -24,7 +24,7 @@ const Modal: FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed top-0 left-0 flex items-center justify-center w-screen h-screen bg-black bg-opacity-75 backdrop-blur">
+    <div className="fixed top-0 left-0 flex items-center justify-center w-screen h-screen bg-black bg-opacity-75 backdrop-blur z-10">
       <div className="relative flex flex-col w-96 p-6 bg-purple-900 rounded-lg shadow-lg">
         <div className="flex justify-end">
           <button

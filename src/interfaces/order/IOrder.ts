@@ -4,6 +4,7 @@ import { IContacts } from "./IContacts";
 export interface IOrder {
     _id: string;
     status: 'new' | 'finished';
+    cleaningDate:Date;
     address: IAddress;
     contacts: IContacts;
     privateHouse: boolean;

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connect } from '../../../../db';
 import mongoose from 'mongoose';
-import PromoCode, { promoCodeSchema } from '../../../../schemas/PromoCode';
+import PromoCode, { promoCodeSchema } from '../../../../modules/PromoCode';
 import { IPromoCode } from '@/interfaces/promo-code/IPromoCode';
 
 export async function GET() {

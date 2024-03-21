@@ -1,18 +1,9 @@
-import { IAddress } from '@/interfaces/order/IAddress';
 import { IContacts } from '@/interfaces/order/IContacts';
 import { IOrder } from '@/interfaces/order/IOrder';
 import mongoose from 'mongoose';
 
 const { Schema } = mongoose;
 
-const addressSchema = new Schema<IAddress>({
-  street: { type: String, required: true },
-  houseNumber: { type: String, required: true },
-  apartmentNumber: { type: String, default: null },
-  entranceNumber: { type: String, required: false, default: null },
-  floorNumber: { type: String, required: false, default: null },
-  intercomCode: { type: Number, required: false, default: null },
-});
 
 const contactsSchema = new Schema<IContacts>({
   fullName: { type: String, required: true },
@@ -28,13 +19,16 @@ const orderSchema = new Schema<IOrder>(
       enum: ['new', 'finished'],
       default: 'new',
     },
+
     privateHouse: {
       type: Boolean,
       default: false,
     },
 
     address: {
-      type: addressSchema,
+      type: Schema.Types.ObjectId,
+      // type: Schema.Types.Mixed,
+      ref: 'Address',
       required: true,
     },
     contacts: {

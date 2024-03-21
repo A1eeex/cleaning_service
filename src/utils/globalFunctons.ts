@@ -28,7 +28,6 @@ export const calculateCleaningTimeRegular = (
   const hours = Math.floor(averageCleaningTimePerCleaner / 60);
   const minutes = Math.floor(averageCleaningTimePerCleaner % 60);
 
-  // console.log(minutes);
   return { hours, minutes, numberOfCleaners };
 };
 
@@ -48,4 +47,9 @@ export const calculateTotalPrice = (
 
   const discountedPrice = totalPrice * (1 - discountPercent / 100);
   return discountedPrice;
+};
+
+export const isLoggedIn = () => {
+  const token = localStorage.getItem('token');
+  return Boolean(token); 
 };

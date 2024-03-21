@@ -13,6 +13,8 @@ export const HREF = {
   regularPage: '/order',
   repairrPage: '/repair',
   adminPage: '/admin',
+  login: '/login',
+  register: '/register',
 };
 
 export const additionalOrdersList = [

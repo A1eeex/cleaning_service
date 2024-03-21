@@ -91,9 +91,6 @@ const OrderPage = () => {
   const maxTime = new Date();
   maxTime.setHours(20, 0);
 
-  // const isTimeValid = (date) => {
-  //   return date >= minTime && date <= maxTime;
-  // };
   const cleaningDetalis = calculateCleaningTimeRegular(
     roomsCount,
     bathroomCount,
@@ -249,7 +246,7 @@ const OrderPage = () => {
     );
 
     if (isCorrectPomocode) {
-      console.log('yes');
+      console.log(' isCorrectPomocode => yes');
       setDiscountPercen(() => isCorrectPomocode.discount);
       setMainTotalOrderPrice(
         calculateTotalPrice(
@@ -260,11 +257,9 @@ const OrderPage = () => {
         )
       );
     } else {
-      console.log('no');
+      console.log('isCorrectPomocode => no');
     }
   };
-
-  console.log('startDate => ', startDate);
 
   return (
     <div className='px-8 py-8'>
